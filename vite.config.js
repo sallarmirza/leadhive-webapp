@@ -4,10 +4,38 @@ import { defineConfig, loadEnv } from 'vite'
 import path from 'node:path'
 
 export default defineConfig(({ mode }) => {
+  // Load environment variables
   const env = loadEnv(mode, process.cwd(), '')
 
+  // Debug: log whether Vite sends cookies to the backend
+  const logCookies = (proxy) => {
+    proxy.on('proxyReq', (proxyReq, req) => {
+      console.log(
+        'PROXY',
+        req.method,
+        req.url,
+        '| cookie sent:',
+        proxyReq.getHeader('cookie') ? 'YES' : 'NO'
+      )
+    })
+  }
+
+  // Common backend proxy configuration
+  const backendProxy = {
+    target: env.BACKEND_URL,
+    changeOrigin: true,
+    secure: true,
+    headers: {
+      'X-Tunnel-Skip-AntiPhishing-Page': 'true',
+    },
+    configure: logCookies,
+  }
+
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+    ],
 
     resolve: {
       alias: {
@@ -17,17 +45,12 @@ export default defineConfig(({ mode }) => {
 
     server: {
       proxy: {
-        '/api': {
-          target: env.BACKEND_URL,
-          changeOrigin: true,
-          secure: true,
-        },
-
-        '/auth': {
-          target: env.BACKEND_URL,
-          changeOrigin: true,
-          secure: true,
-        },
+        '/api': backendProxy,
+        '/auth': backendProxy,
+        '/business-profile': backendProxy,
+        '/selection-videos': backendProxy,
+        '/comments': backendProxy, 
+        '/ai': backendProxy,
       },
     },
   }
