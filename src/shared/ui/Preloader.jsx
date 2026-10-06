@@ -10,20 +10,19 @@ export function Preloader() {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual'
     window.scrollTo(0, 0)
 
-    if (reducedMotion || sessionStorage.getItem('leadhive-intro-seen')) {
+    if (reducedMotion) {
       setIsLoaded(true)
       return
     }
 
     document.body.style.overflow = 'hidden'
-    const duration = 960
+    const duration = 2300
     const started = performance.now()
     const timer = window.setInterval(() => {
       const elapsed = performance.now() - started
       setProgress(Math.min(100, Math.round((elapsed / duration) * 100)))
       if (elapsed >= duration) {
         window.clearInterval(timer)
-        sessionStorage.setItem('leadhive-intro-seen', 'true')
         window.setTimeout(() => {
           setIsLoaded(true)
           document.body.style.overflow = ''
@@ -52,7 +51,7 @@ export function Preloader() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: .5, ease: [0.16, 1, .3, 1] }}
           >
-            <img className="preloader-symbol" src="/favicon.png" alt="" aria-hidden="true" />
+            <img className="preloader-symbol" src="/leadhive-logo.png" alt="" aria-hidden="true" />
             <p className="preloader-status">Initializing Lead Intelligence</p>
             <div
               className="preloader-progress"
