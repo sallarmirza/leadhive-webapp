@@ -1,8 +1,29 @@
+import { useState } from 'react'
 import { Building2, Sparkles } from 'lucide-react'
 import { ConnectionRequired, Panel, PanelHeader, ScreenHeading, StatusBadge, StepActions } from '../DemoUI'
 
+const MIN_PERSONA_LENGTH = 250
+
 export function PersonaSetup({ controller: c, navigate }) {
+  const [touched, setTouched] = useState({ services: false, ai_rules: false })
+  const [submitAttempted, setSubmitAttempted] = useState(false)
   const update = (key, value) => c.setProfile({ ...c.profile, [key]: value })
+  const servicesLength = c.profile.services.trim().length
+  const directivesLength = c.profile.ai_rules.trim().length
+  const servicesValid = servicesLength >= MIN_PERSONA_LENGTH
+  const directivesValid = directivesLength >= MIN_PERSONA_LENGTH
+  const personaValid = servicesValid && directivesValid
+  const showServicesError =
+    !servicesValid && Boolean(c.profile.services) && (touched.services || submitAttempted)
+  const showDirectivesError =
+    !directivesValid && Boolean(c.profile.ai_rules) && (touched.ai_rules || submitAttempted)
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setSubmitAttempted(true)
+    if (!personaValid) return
+    if (await c.mutate('/profile', c.profile)) navigate('content')
+  }
 
   return (
     <section className="yi-persona-setup">
@@ -13,12 +34,7 @@ export function PersonaSetup({ controller: c, navigate }) {
       {!c.channel ? (
         <ConnectionRequired />
       ) : (
-        <form
-          onSubmit={async event => {
-            event.preventDefault()
-            if (await c.mutate('/profile', c.profile)) navigate('content')
-          }}
-        >
+        <form onSubmit={handleSubmit}>
           <div className="yi-persona-workspace">
             <Panel className="yi-persona-form">
               <PanelHeader
@@ -64,8 +80,19 @@ export function PersonaSetup({ controller: c, navigate }) {
                     required
                     value={c.profile.services}
                     onChange={e => update('services', e.target.value)}
+                    onBlur={() => setTouched(current => ({ ...current, services: true }))}
+                    aria-invalid={showServicesError}
+                    aria-describedby="persona-services-meta"
                     placeholder="Briefly describe what your business does and key solutions offered..."
                   />
+                  <span id="persona-services-meta" className="yi-field-validation">
+                    <span className="yi-character-count">{servicesLength} / {MIN_PERSONA_LENGTH} characters</span>
+                    {showServicesError && (
+                      <span className="yi-validation-message" role="alert">
+                        Please enter at least 250 characters describing your core services and offerings.
+                      </span>
+                    )}
+                  </span>
                 </label>
 
                 <label className="yi-field-wide">
@@ -75,8 +102,19 @@ export function PersonaSetup({ controller: c, navigate }) {
                     required
                     value={c.profile.ai_rules}
                     onChange={e => update('ai_rules', e.target.value)}
+                    onBlur={() => setTouched(current => ({ ...current, ai_rules: true }))}
+                    aria-invalid={showDirectivesError}
+                    aria-describedby="persona-directives-meta"
                     placeholder="E.g., Always direct pricing queries to the website; never make promises on timelines..."
                   />
+                  <span id="persona-directives-meta" className="yi-field-validation">
+                    <span className="yi-character-count">{directivesLength} / {MIN_PERSONA_LENGTH} characters</span>
+                    {showDirectivesError && (
+                      <span className="yi-validation-message" role="alert">
+                        Please enter at least 250 characters describing your response rules and directives.
+                      </span>
+                    )}
+                  </span>
                 </label>
               </div>
             </Panel>
@@ -121,6 +159,7 @@ export function PersonaSetup({ controller: c, navigate }) {
             back={() => navigate('channel')}
             submit
             busy={c.busy || c.loading}
+            disabled={!personaValid}
             label="Save & Select Videos"
           />
         </form>

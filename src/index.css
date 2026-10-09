@@ -6,3 +6,68 @@
 @import './shared/styles/components.css';
 @import './shared/styles/sections.css';
 @import './shared/styles/premium-white.css';
+
+.td-session-loading,
+.oauth-return {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #f7f9fc;
+  color: #1d2a3a;
+}
+
+.td-session-loading,
+.oauth-return-card {
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.td-session-error {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  max-width: 32rem;
+  padding: 2rem;
+}
+
+.td-session-error h1,
+.oauth-return-card h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.td-session-loading p,
+.oauth-return-card p {
+  margin: 0;
+}
+
+.oauth-return-card {
+  display: grid;
+  justify-items: center;
+  padding: 2rem;
+}
+
+.oauth-return-action {
+  border: 0;
+  border-radius: 0.6rem;
+  padding: 0.7rem 1.1rem;
+  background: #1677d2;
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.td-session-spinner,
+.oauth-return-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #d7e2ef;
+  border-top-color: #1677d2;
+  border-radius: 50%;
+  animation: leadhive-spin 0.8s linear infinite;
+}
+
+@keyframes leadhive-spin {
+  to { transform: rotate(360deg); }
+}

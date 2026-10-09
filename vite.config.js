@@ -4,8 +4,7 @@ import { defineConfig, loadEnv } from 'vite'
 import path from 'node:path'
 
 export default defineConfig(({ mode }) => {
-  // Load environment variables
-  const env = loadEnv(mode, process.cwd(), '')
+  const env = loadEnv(mode, import.meta.dirname, '')
 
   // Debug: log whether Vite sends cookies to the backend
   const logCookies = (proxy) => {
@@ -49,7 +48,7 @@ export default defineConfig(({ mode }) => {
         '/auth': backendProxy,
         '/business-profile': backendProxy,
         '/selection-videos': backendProxy,
-        '/comments': backendProxy, 
+        '/comments': backendProxy,
         '/ai': backendProxy,
       },
     },

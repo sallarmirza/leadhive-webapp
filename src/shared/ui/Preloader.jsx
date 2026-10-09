@@ -10,10 +10,7 @@ export function Preloader() {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual'
     window.scrollTo(0, 0)
 
-    if (reducedMotion) {
-      setIsLoaded(true)
-      return
-    }
+    if (reducedMotion) return
 
     document.body.style.overflow = 'hidden'
     const duration = 2300
@@ -38,7 +35,7 @@ export function Preloader() {
 
   return (
     <AnimatePresence>
-      {!isLoaded && (
+      {!reducedMotion && !isLoaded && (
         <motion.div
           className="preloader-overlay"
           initial={{ opacity: 1 }}

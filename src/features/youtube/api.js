@@ -6,12 +6,15 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 export class YoutubeApiError extends Error {
-  constructor(message, status) {
+  constructor(message, status, code = 'http') {
     super(message)
     this.name = 'YoutubeApiError'
     this.status = status
+    this.code = code
   }
 }
+
+const AUTH_TIMEOUT_MS = 12000
 
 /**
  * Maps the frontend's expected auth paths to the backend's real paths.
@@ -52,12 +55,28 @@ function detailMessage(data) {
 
 export async function youtubeRequest(path, options = {}) {
   const requestUrl = path.startsWith('http') ? path : path
+  const requestController = new AbortController()
+  const timeoutMs = options.timeoutMs
+  let timedOut = false
+
+  const abortFromCaller = () => requestController.abort(options.signal?.reason)
+  if (options.signal?.aborted) abortFromCaller()
+  else options.signal?.addEventListener('abort', abortFromCaller, { once: true })
+
+  const timeout = timeoutMs
+    ? globalThis.setTimeout(() => {
+        timedOut = true
+        requestController.abort()
+      }, timeoutMs)
+    : null
+
   let response
+  let data
   try {
     response = await fetch(requestUrl, {
       method: options.method || 'GET',
       credentials: 'include',
-      signal: options.signal,
+      signal: requestController.signal,
       headers: {
         Accept: 'application/json',
         ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
@@ -65,16 +84,29 @@ export async function youtubeRequest(path, options = {}) {
       },
       ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
     })
+    data = await responseBody(response)
   } catch (error) {
-    if (!options.signal?.aborted) console.error('[YouTube API] Request failed', { path, error })
-    throw error
+    if (options.signal?.aborted) throw error
+    if (timedOut) {
+      throw new YoutubeApiError('The request timed out. Please try again.', null, 'timeout')
+    }
+    console.error('[YouTube API] Request failed', { path, error })
+    throw new YoutubeApiError('Unable to reach YouTube Intelligence.', null, 'network')
+  } finally {
+    if (timeout) globalThis.clearTimeout(timeout)
+    options.signal?.removeEventListener('abort', abortFromCaller)
   }
-
-  const data = await responseBody(response)
 
   if (!response.ok) {
     console.error('[YouTube API] Error response', { path, status: response.status, body: data })
-    throw new YoutubeApiError(detailMessage(data), response.status)
+    const code = response.status === 401
+      ? 'unauthorized'
+      : response.status === 403
+        ? 'forbidden'
+        : response.status >= 500
+          ? 'server'
+          : 'http'
+    throw new YoutubeApiError(detailMessage(data), response.status, code)
   }
 
   return data
@@ -85,10 +117,12 @@ export async function youtubeRequest(path, options = {}) {
 // ─────────────────────────────────────────────────────────────────────────
 
 /** GET /auth/me — check if the user is logged in. 401 if not. */
-export const getAuthMe = () => youtubeRequest('/auth/me')
+export const getAuthMe = (options = {}) =>
+  youtubeRequest('/auth/me', { timeoutMs: AUTH_TIMEOUT_MS, ...options })
 
 /** GET /auth/channels — return the signed-in user's saved YouTube channels. */
-export const getAuthChannels = () => youtubeRequest('/auth/channels')
+export const getAuthChannels = (options = {}) =>
+  youtubeRequest('/auth/channels', { timeoutMs: AUTH_TIMEOUT_MS, ...options })
 
 /** POST /auth/logout — clear the JWT cookie. */
 export const logoutUser = () => youtubeRequest('/auth/logout', { method: 'POST' })
