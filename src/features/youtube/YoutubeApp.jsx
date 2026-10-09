@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { DemoShell } from './DemoShell'
-import { useYouTubeIntelligence } from './hooks'
-import { ChannelSetup } from './screens/ChannelSetup'
-import { CommandCenter } from './screens/CommandCenter'
-import { ContentSelection } from './screens/ContentSelection'
-import { PersonaSetup } from './screens/PersonaSetup'
-import { PlatformSelection } from './screens/PlatformSelection'
-import { screenFromHash } from './types'
+
 import './styles/workspace.css'
 import './styles/intelligence.css'
 import './styles/premium.css'
+import { DemoShell } from './DemoShell'
+import { PlatformSelection } from './screens/PlatformSelection'
+import { ChannelSetup } from './screens/ChannelSetup'
+import { PersonaSetup } from './screens/PersonaSetup'
+import { ContentSelection } from './screens/ContentSelection'
+import { CommandCenter } from './screens/CommandCenter'
+import { screenFromHash } from './types'
+import { useYouTubeIntelligence } from './hooks'
 
 const oauthFailureMessages = {
   channel_fetch: "We couldn't retrieve your YouTube channel.",
@@ -57,6 +58,7 @@ export function YoutubeApp() {
   const controller = useYouTubeIntelligence()
   const location = useLocation()
   const routerNavigate = useNavigate()
+  const prevAuthRef = useRef(null)
 
   useEffect(() => {
     const previousTitle = document.title
@@ -82,18 +84,37 @@ export function YoutubeApp() {
   }, [location.hash, location.pathname, location.search, routerNavigate])
 
   useEffect(() => {
+    const prev = prevAuthRef.current
+    const now = controller.authStatus
     const currentHash = window.location.hash.slice(1)
-    if (controller.authStatus === 'authenticated') {
-      if (!currentHash || currentHash === 'platform') window.location.hash = 'channel'
-    } else if (
-      controller.authStatus === 'anonymous' &&
-      currentHash &&
-      currentHash !== 'platform' &&
-      currentHash !== 'channel'
-    ) {
-      window.location.hash = 'channel'
+
+    if (now === 'anonymous') {
+      if (currentHash && currentHash !== 'platform' && currentHash !== 'channel') {
+        window.location.hash = 'channel'
+      }
+      prevAuthRef.current = now
+      return
     }
-  }, [controller.authStatus, controller.session.selected])
+
+    if (now === 'authenticated') {
+      const justLoggedIn = prev === 'anonymous'
+      const finishedInitialLoad = prev === 'loading' || prev === null
+
+      if (justLoggedIn || finishedInitialLoad) {
+        if (!currentHash || currentHash === 'platform') {
+          if (controller.session.channels.length > 0) {
+            window.location.hash = 'channel'
+          } else if (controller.session.selected) {
+            window.location.hash = 'dashboard'
+          } else {
+            window.location.hash = 'channel'
+          }
+        }
+      }
+    }
+
+    prevAuthRef.current = now
+  }, [controller.authStatus, controller.session.channels.length, controller.session.selected])
 
   function navigate(next) {
     window.location.hash = next

@@ -37,7 +37,7 @@ function FacebookMark({ size = 16 }) {
   )
 }
 
-export function PlatformSelection({ navigate }) {
+export function PlatformSelection({ navigate, controller }) {
   const reduced = useReducedMotion()
   const visual = useRef(null)
 
@@ -98,7 +98,7 @@ export function PlatformSelection({ navigate }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: reduced ? 0 : 0.18, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         >
-          <ConnectButton />
+          {!controller?.authenticated && <ConnectButton />}
           <button className="td-button td-button-secondary yi-action-explore" onClick={() => navigate('dashboard')}>
             Explore Workspace <ArrowRight size={15} className="yi-btn-arrow" />
           </button>

@@ -5,6 +5,21 @@ import path from 'node:path'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, import.meta.dirname, '')
+
+  // Debug: log whether Vite sends cookies to the backend
+  const logCookies = (proxy) => {
+    proxy.on('proxyReq', (proxyReq, req) => {
+      console.log(
+        'PROXY',
+        req.method,
+        req.url,
+        '| cookie sent:',
+        proxyReq.getHeader('cookie') ? 'YES' : 'NO'
+      )
+    })
+  }
+
+  // Common backend proxy configuration
   const backendProxy = {
     target: env.BACKEND_URL,
     changeOrigin: true,
@@ -12,10 +27,14 @@ export default defineConfig(({ mode }) => {
     headers: {
       'X-Tunnel-Skip-AntiPhishing-Page': 'true',
     },
+    configure: logCookies,
   }
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+    ],
 
     resolve: {
       alias: {

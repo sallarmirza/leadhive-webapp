@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from "react";
 import {
   YoutubeApiError,
   youtubeAuthUrl,
@@ -25,12 +25,12 @@ const blankSchedule = {
 const emptySession = { channels: [], selected: null, csrf: '' }
 
 function stringValue(value) {
-  return typeof value === 'string' && value.trim() ? value.trim() : null
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function nullableString(value) {
-  if (value === null || value === undefined || value === '') return null
-  return String(value)
+  if (value === null || value === undefined || value === "") return null;
+  return String(value);
 }
 
 function rememberSelectedChannelId(channelId) {
@@ -56,9 +56,9 @@ function readSelectedChannelId() {
     if (value) return value
   }
   try {
-    return stringValue(window.localStorage.getItem(CHANNEL_STORAGE_KEY))
+    return stringValue(window.localStorage.getItem(CHANNEL_STORAGE_KEY));
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -117,8 +117,8 @@ function extractChannels(payload) {
       ? payload.channels
       : Array.isArray(payload?.data)
         ? payload.data
-        : []
-  return list.map(parseChannel).filter(Boolean)
+        : [];
+  return list.map(parseChannel).filter(Boolean);
 }
 
 function extractAuthFlag(payload) {
@@ -132,15 +132,15 @@ function extractAuthFlag(payload) {
     if (payload.user || payload.email) return true
     if (payload.id || payload.sub) return true
   }
-  return false
+  return false;
 }
 
 function errorMessage(error, fallback) {
-  return error instanceof Error ? error.message : fallback
+  return error instanceof Error ? error.message : fallback;
 }
 
 function isUnauthorized(error) {
-  return error instanceof YoutubeApiError && error.status === 401
+  return error instanceof YoutubeApiError && error.status === 401;
 }
 
 function authenticationErrorMessage(error, phase) {
@@ -226,9 +226,9 @@ export function useYouTubeIntelligence({ preferredChannelId, useStoredChannel = 
       try {
         const me = await getAuthMe({ signal: controller.signal })
         if (!extractAuthFlag(me)) {
-          setSession(emptySession)
-          setAuthStatus('anonymous')
-          return
+          setSession(emptySession);
+          setAuthStatus("anonymous");
+          return;
         }
 
         phase = 'channels'
@@ -239,7 +239,7 @@ export function useYouTubeIntelligence({ preferredChannelId, useStoredChannel = 
         const fromServer =
           stringValue(channelsPayload?.selected) ||
           stringValue(channelsPayload?.selected_channel_id) ||
-          stringValue(channelsPayload?.current_channel_id)
+          stringValue(channelsPayload?.current_channel_id);
 
         let chosen = null
         if (initial.channelId) {
@@ -264,11 +264,11 @@ export function useYouTubeIntelligence({ preferredChannelId, useStoredChannel = 
         setAuthStatus('authenticated')
         setError('')
       } catch (err) {
-        if (controller.signal.aborted) return
+        if (controller.signal.aborted) return;
         if (isUnauthorized(err)) {
-          setSession(emptySession)
-          setAuthStatus('anonymous')
-          return
+          setSession(emptySession);
+          setAuthStatus("anonymous");
+          return;
         }
         setError(authenticationErrorMessage(err, phase))
         setAuthStatus('error')
@@ -344,23 +344,23 @@ export function useYouTubeIntelligence({ preferredChannelId, useStoredChannel = 
   }
 
   const connect = useCallback(() => {
-    window.location.assign(youtubeAuthUrl('/auth/youtube/login'))
-  }, [])
+    window.location.assign(youtubeAuthUrl("/auth/youtube/login"));
+  }, []);
 
   const logout = useCallback(async () => {
     try {
-      await logoutUser()
+      await logoutUser();
     } catch (err) {
       if (!isUnauthorized(err)) {
-        setError(errorMessage(err, 'Unable to sign out.'))
-        return false
+        setError(errorMessage(err, "Unable to sign out."));
+        return false;
       }
     }
-    forgetSelectedChannelId()
-    setSession(emptySession)
-    setAuthStatus('anonymous')
-    return true
-  }, [])
+    forgetSelectedChannelId();
+    setSession(emptySession);
+    setAuthStatus("anonymous");
+    return true;
+  }, []);
 
   const reload = useCallback(() => {
     setError('')
@@ -371,7 +371,7 @@ export function useYouTubeIntelligence({ preferredChannelId, useStoredChannel = 
 
   return {
     session,
-    authenticated: authStatus === 'authenticated',
+    authenticated: authStatus === "authenticated",
     authStatus,
     authPhase,
     authFailureReason: initial.authFailureReason,
@@ -387,7 +387,9 @@ export function useYouTubeIntelligence({ preferredChannelId, useStoredChannel = 
     running,
     setRunning,
     automationReady,
-    channel: session.channels.find(channel => channel.id === session.selected) || null,
+    channel:
+      session.channels.find((channel) => channel.id === session.selected) ||
+      null,
     chooseChannel,
     connect,
     logout,

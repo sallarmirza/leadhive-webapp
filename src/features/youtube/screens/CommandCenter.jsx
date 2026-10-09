@@ -15,6 +15,7 @@ import {
   ConnectionRequired,
   EmptyState,
   Panel,
+  PanelHeader,
   ResourceStatus,
   ScreenHeading,
   StatusBadge,
@@ -489,7 +490,6 @@ export function CommandCenter({ controller: c, navigate }) {
                     </EmptyState>
                   )
                 )}
-
               </Panel>
             </div>
           )}

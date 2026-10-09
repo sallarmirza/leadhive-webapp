@@ -34,9 +34,7 @@ export function PersonaSetup({ controller: c, navigate }) {
       {!c.channel ? (
         <ConnectionRequired />
       ) : (
-        <form
-          onSubmit={handleSubmit}
-        >
+        <form onSubmit={handleSubmit}>
           <div className="yi-persona-workspace">
             <Panel className="yi-persona-form">
               <PanelHeader
